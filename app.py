@@ -1,40 +1,32 @@
-# App file for the project.
-from flask_openapi3 import Info, OpenAPI, Tag, APIBlueprint
+from pydantic import BaseModel
+from flask_openapi3 import Info, Tag
+from flask_openapi3 import OpenAPI
 
-
-info = Info(
+Info = Info(
     title="My First Application",
-    version="1.0.0",
-    description="This is a sample application using OpenAPI3 with Flask.",
+    version="0.1",
+    description="First application using the FlaskOpenAPI3 API",
 )
+app = OpenAPI(__name__, info=Info)
 
-app = OpenAPI(__name__, info=info, doc_prefix="/api", api_doc_url="/openapi.json")
+book_tag = Tag(name="Book", description="Book API")
 
-health_tag = Tag(name="Health", description="Health check endpoints")
-router = APIBlueprint("/", __name__, abp_tags=[health_tag], url_prefix="/api")
 
-@app.get("/health", tags=[health_tag])
-def health_check():
+class BookQuery(BaseModel):
+    age: int
+    auther: str
+
+
+@app.get("/book", tags=[book_tag], responses={"200": BookQuery}, summary="Book API")
+def get_book(query: BookQuery):
     """
-    Health check endpoint to verify the service is running.
+    Get book details based on the query parameters.
     """
-    return {"status": "ok"}, 200
+    return {"age": query.age, "auther": query.auther}
 
-@app.get("/info", tags=[health_tag])
-def get_info():
-    """
-    Endpoint to return application information.
-    """
-    return {
-        "application": "My First Application",
-        "version": "1.0.0",
-        "description": "This is a sample application using OpenAPI3 with Flask."
-    }, 200
 
-# Register the router with the app
-app.register_api(router)
 if __name__ == "__main__":
     """
     Main entry point to run the Flask application.
     """
-    app.run(host="0.0.0", port=8000, debug=True)
+    app.run(debug=True)
